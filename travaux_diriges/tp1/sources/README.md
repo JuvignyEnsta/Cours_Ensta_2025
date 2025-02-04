@@ -258,8 +258,22 @@ $$
 
 
 ---
+a. **Speedup pour \( n = 1024 \)** 
 
-a. **Speedup pour \( n = 2048 \)**
+| OMP_NUM | T(1024) | Speedup (1024) |
+|---------|---------|----------------|
+| 1       | 0.633688 | 1.000          |
+| 2       | 0.634289 | 0.999          |
+| 3       | 0.637213 | 0.995          |
+| 4       | 0.640087 | 0.990          |
+| 5       | 0.620745 | 1.021          |
+| 6       | 0.669539 | 0.947          |
+| 7       | 0.619062 | 1.024          |
+| 8       | 0.632346 | 1.002          |
+
+
+
+b. **Speedup pour \( n = 2048 \)**
 
 | OMP_NUM | Speedup |
 | ------- | ------- |
@@ -274,7 +288,7 @@ a. **Speedup pour \( n = 2048 \)**
 
 ---
 
-b. **Speedup pour \( n = 512 \)**
+c. **Speedup pour \( n = 512 \)**
 
 | OMP_NUM | Speedup |
 | ------- | ------- |
@@ -289,7 +303,7 @@ b. **Speedup pour \( n = 512 \)**
 
 ---
 
-c. **Speedup pour \( n = 4096 \)**
+d. **Speedup pour \( n = 4096 \)**
 
 | OMP_NUM | Speedup |
 | ------- | ------- |
@@ -303,6 +317,40 @@ c. **Speedup pour \( n = 4096 \)**
 | 8       | 4.663   |
 
 ---
+```
+// code pour le tracé
+
+import matplotlib.pyplot as plt
+
+# Données
+omp_num = [1, 2, 3, 4, 5, 6, 7, 8]
+
+speedup_1024 = [1.000, 0.999, 0.995, 0.990, 1.021, 0.947, 1.024, 1.002]
+speedup_2048 = [1.000, 1.797, 2.629, 3.367, 4.362, 4.764, 4.148, 4.559]
+speedup_512 = [1.000, 1.860, 2.299, 3.329, 3.300, 2.963, 3.002, 3.812]
+speedup_4096 = [1.000, 1.874, 2.666, 3.465, 4.125, 4.858, 4.300, 4.663]
+
+# Tracer les courbes
+plt.figure(figsize=(10, 6))
+plt.plot(omp_num, speedup_1024, marker='o', label='n = 1024')
+plt.plot(omp_num, speedup_2048, marker='s', label='n = 2048')
+plt.plot(omp_num, speedup_512, marker='^', label='n = 512')
+plt.plot(omp_num, speedup_4096, marker='d', label='n = 4096')
+
+# Ajouter des titres et des labels
+plt.title('Speedup en fonction du nombre de threads (OMP_NUM)', fontsize=14)
+plt.xlabel('Nombre de threads (OMP_NUM)', fontsize=12)
+plt.ylabel('Speedup', fontsize=12)
+plt.xticks(omp_num)  # Afficher toutes les valeurs de OMP_NUM sur l'axe x
+plt.grid(True, linestyle='--', alpha=0.6)  # Ajouter une grille
+
+# Légende
+plt.legend(title='Taille du problème (n)', fontsize=10, title_fontsize=12)
+
+# Afficher le graphique
+plt.tight_layout()
+plt.show()
+```
 
 4. **Courbes de Speedup**
 
@@ -334,7 +382,7 @@ c. **Speedup pour \( n = 4096 \)**
 Ainsi, en augmentant le nombre de threads, le temps d'exécution devrait diminuer, indiquant une amélioration des performances.
 Cependant, il peut y avoir un plateau ou une légère augmentation du temps à partir d'un certain nombre de threads en raison de la surcharge de gestion des threads et de la contention pour les ressources.
 
-![Image Description](/Cours_Ensta_2025/travaux_diriges/tp1/sources/image1.png)
+![Image Description](/Cours_Ensta_2025/travaux_diriges/tp1/sources/image.png)
 
 #### Réponse à la question 4:
 
