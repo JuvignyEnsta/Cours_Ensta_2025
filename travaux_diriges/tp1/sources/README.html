@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>TD1 Systèmes parallèles et distribués</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="./github-pandoc.css" />
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">TD1 Systèmes parallèles et distribués</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#td1">TD1</a>
+<ul>
+<li><a href="#lscpu">lscpu</a></li>
+<li><a href="#produit-matrice-matrice">Produit matrice-matrice</a>
+<ul>
+<li><a href="#effet-de-la-taille-de-la-matrice">Effet de la taille de la matrice</a></li>
+<li><a href="#permutation-des-boucles">Permutation des boucles</a></li>
+<li><a href="#omp-sur-la-meilleure-boucle">OMP sur la meilleure boucle</a></li>
+<li><a href="#produit-par-blocs">Produit par blocs</a></li>
+<li><a href="#bloc-omp">Bloc + OMP</a></li>
+<li><a href="#comparaison-avec-blas-eigen-et-numpy">Comparaison avec BLAS, Eigen et numpy</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#tips">Tips</a></li>
+</ul>
+</nav>
+<h1 id="td1">TD1</h1>
+<p><code>pandoc -s --toc README.md --css=./github-pandoc.css -o README.html</code></p>
+<h2 id="lscpu">lscpu</h2>
+<p><em>lscpu donne des infos utiles sur le processeur : nb core, taille de cache :</em></p>
+<pre><code>cedrick@cedrick:~$ lscpu
+Architecture:             x86_64
+  CPU op-mode(s):         32-bit, 64-bit
+  Address sizes:          39 bits physical, 48 bits virtual
+  Byte Order:             Little Endian
+CPU(s):                   12
+  On-line CPU(s) list:    0-11
+Vendor ID:                GenuineIntel
+  Model name:             Intel(R) Core(TM) i7-9850H CPU @ 2.60GHz
+    CPU family:           6
+    Model:                158
+    Thread(s) per core:   2
+    Core(s) per socket:   6
+    Socket(s):            1
+    Stepping:             13
+    CPU max MHz:          4600,0000
+    CPU min MHz:          800,0000
+    BogoMIPS:             5199.98
+    Flags:                fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge m
+                          ca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 s
+                          s ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc 
+                          art arch_perfmon pebs bts rep_good nopl xtopology nons
+                          top_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor 
+                          ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm p
+                          cid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_tim
+                          er aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch
+                           cpuid_fault epb ssbd ibrs ibpb stibp ibrs_enhanced tp
+                          r_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adj
+                          ust sgx bmi1 avx2 smep bmi2 erms invpcid mpx rdseed ad
+                          x smap clflushopt intel_pt xsaveopt xsavec xgetbv1 xsa
+                          ves dtherm ida arat pln pts hwp hwp_notify hwp_act_win
+                          dow hwp_epp vnmi sgx_lc md_clear flush_l1d arch_capabi
+                          lities
+Virtualization features:  
+  Virtualization:         VT-x
+Caches (sum of all):    
+  L1d:                    192 KiB (6 instances)
+  L1i:                    192 KiB (6 instances)
+  L2:                     1,5 MiB (6 instances)
+  L3:                     12 MiB (1 instance)
+NUMA:                   
+  NUMA node(s):           1
+  NUMA node0 CPU(s):      0-11
+Vulnerabilities:        
+  Gather data sampling:   Mitigation; Microcode
+  Itlb multihit:          KVM: Mitigation: VMX disabled
+  L1tf:                   Not affected
+  Mds:                    Not affected
+  Meltdown:               Not affected
+  Mmio stale data:        Mitigation; Clear CPU buffers; SMT vulnerable
+  Reg file data sampling: Not affected
+  Retbleed:               Mitigation; Enhanced IBRS
+  Spec rstack overflow:   Not affected
+  Spec store bypass:      Mitigation; Speculative Store Bypass disabled via prct
+                          l
+  Spectre v1:             Mitigation; usercopy/swapgs barriers and __user pointe
+                          r sanitization
+  Spectre v2:             Mitigation; Enhanced / Automatic IBRS; IBPB conditiona
+                          l; RSB filling; PBRSB-eIBRS SW sequence; BHI SW loop, 
+                          KVM SW loop
+  Srbds:                  Mitigation; Microcode
+  Tsx async abort:        Mitigation; TSX disabled
+</code></pre>
+<h2 id="produit-matrice-matrice">Produit matrice-matrice</h2>
+<h3 id="effet-de-la-taille-de-la-matrice">Effet de la taille de la matrice</h3>
+<table>
+<thead>
+<tr class="header">
+<th>n</th>
+<th>MFlops</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1024 (origine)</td>
+<td>304.761</td>
+</tr>
+<tr class="even">
+<td>1023</td>
+<td>282.849</td>
+</tr>
+<tr class="odd">
+<td>1025</td>
+<td>283.735</td>
+</tr>
+</tbody>
+</table>
+<p><em>Expliquons les résultats obtenus</em></p>
+<pre><code>On remarque que le temps de calcul est meilleur pour des matrices de dimension 1024, par rapport à des matrices de dimension 1023 ou 1025.
+On constate que l&#39;exécution du produit matriciel s&#39;effectue plus rapidement pour une taille de 1024 par rapport aux autres dimensions testées. 
+Celà peut s&#39;expliquer sur 2 points:
+
+- Alignement mémoire optimal: La dimension 1024 est une puissance de 2, ce qui permet aux données de la matrice d&#39;être correctement alignées en mémoire. Cet alignement favorise une meilleure exploitation des blocs de mémoire cache (L1, L2, L3), réduisant ainsi les accès à la mémoire principale qui sont plus lents.
+- Efficacité de la hiérarchie cache : Un alignement optimal signifie que le cache est utilisé de manière plus efficace, avec un taux de cache hit élevé. Cela réduit considérablement le temps d&#39;accès aux données pendant l&#39;exécution des boucles imbriquées du produit matriciel.
+
+La dimension 1024 permet donc à ces optimisations de s&#39;appliquer de manière optimale, contrairement aux dimensions 1023 ou 1025 qui ne correspondent pas aussi bien aux structures de la mémoire.
+
+En somme, Le résultat observé s&#39;explique principalement par l&#39;alignement mémoire et l&#39;utilisation efficace de la hiérarchie cache du processeur. En effet, 1024 étant une puissance de 2, la taille des matrices permet une organisation en mémoire qui correspond mieux aux blocs utilisés par le cache. Cela minimise les temps d&#39;accès et améliore la gestion de la mémoire cache, contrairement aux dimensions 1023 ou 1025 où l&#39;alignement n&#39;est pas optimal, induisant des accès plus lents et une gestion moins efficace du cache.</code></pre>
+<h3 id="permutation-des-boucles">Permutation des boucles</h3>
+<p><em>Expliquons comment est compilé le code (ligne de make ou de gcc) : on aura besoin de savoir l’optim, les paramètres, etc. Par exemple :</em></p>
+<p><code>make TestProduct.exe &amp;&amp; ./TestProduct.exe 1024</code></p>
+<p>Pour compiler et exécuter le programme, on utilise :</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="fu">make</span> TestProductMatrix.exe <span class="kw">&amp;&amp;</span> <span class="ex">./TestProductMatrix.exe</span> 1024</span></code></pre></div>
+<ol type="1">
+<li><p><strong>Compilation (<code>make TestProductMatrix.exe</code>)</strong></p>
+<ul>
+<li>Utilise <code>g++</code> avec les options :
+<ul>
+<li><code>-O2</code> : Optimisation standard (bon équilibre entre vitesse et stabilité).</li>
+<li><code>-O3</code> : Optimisation agressive (fusion de boucles, vectorisation…).</li>
+<li><code>-march=native</code> : Exploite les instructions spécifiques au processeur.</li>
+<li><code>-Wall</code> : Active les avertissements pour détecter d’éventuelles erreurs.</li>
+</ul></li>
+</ul></li>
+<li><p><strong>Exécution (<code>./TestProductMatrix.exe 1024</code>)</strong></p>
+<ul>
+<li>Lance le programme avec une matrice 1024×1024 pour mesurer les performances.</li>
+</ul></li>
+</ol>
+<p>Si besoin de débogage :</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="fu">make</span> DEBUG=yes TestProductMatrix.exe <span class="kw">&amp;&amp;</span> <span class="ex">./TestProductMatrix.exe</span> 1024</span></code></pre></div>
+<p>(utilise <code>-O0</code> pour désactiver les optimisations et <code>-g</code> pour le débogage).</p>
+<table>
+<thead>
+<tr class="header">
+<th>ordre</th>
+<th>time</th>
+<th>MFlops</th>
+<th>MFlops(n=2048)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>i,j,k</td>
+<td>2.12581</td>
+<td>1010.2</td>
+<td>486.144</td>
+</tr>
+<tr class="even">
+<td>j,i,k</td>
+<td>2.16959</td>
+<td>989.809</td>
+<td>402.17</td>
+</tr>
+<tr class="odd">
+<td>i,k,j(origine)</td>
+<td>7.04645</td>
+<td>304.761</td>
+<td>217.261</td>
+</tr>
+<tr class="even">
+<td>k,i,j</td>
+<td>7.33375</td>
+<td>292.822</td>
+<td>146.79</td>
+</tr>
+<tr class="odd">
+<td>j,k,i</td>
+<td>0.814834</td>
+<td>2635.49</td>
+<td>2350.9</td>
+</tr>
+<tr class="even">
+<td>k,j,i</td>
+<td>0.609918</td>
+<td>3520.94</td>
+<td>2793.11</td>
+</tr>
+</tbody>
+</table>
+<p><em>Discutons les résultats :</em></p>
+<p>Dans le cours, il est expliqué que l’accès à la mémoire est un facteur clé dans l’optimisation du calcul parallèle.</p>
+<ul>
+<li>Pour un accès mémoire efficace, il est préférable d’accéder aux données stockées en mémoire de manière séquentielle.</li>
+<li>L’accès aux données en cache est beaucoup plus rapide que l’accès à la RAM. Le <strong>cache L1 et L2</strong> doivent être utilisés au maximum.</li>
+</ul>
+<p>L’algorithme naïf (i, j, k) accède aux éléments de <code>B(k, j)</code> de façon non contiguë, ce qui cause un mauvais cache hit rate et entraîne des accès mémoire coûteux.</p>
+<p>Ainsi, l’ordre de boucle optimale est <code>(k, j, i)</code> car :</p>
+<ol type="1">
+<li><p>On a un accès mémoire optimisé :</p>
+<ul>
+<li><code>A(i, k)</code> est parcouru colonne par colonne, ce qui est efficace car A est stockée en mémoire ligne par ligne.</li>
+<li><code>B(k, j)</code> est accédé de manière séquentielle sur les colonnes, ce qui améliore la localité spatiale et réduit les accès mémoire coûteux.</li>
+<li><code>C(i, j)</code> est mis à jour de manière contiguë dans la mémoire.</li>
+</ul></li>
+<li><p>On se sert du Blocage pour exploiter le cache :</p>
+<ul>
+<li>La boucle est découpée en sous-blocs de taille <code>szBlock</code>, ce qui permet de réduire la quantité de données chargées en cache simultanément.</li>
+<li>Ce blocage des calculs améliore le taux de réutilisation des données sans éviction prématurée des caches L1 et L2.</li>
+</ul></li>
+<li><p>Ce type d’algorithme se prête bien à une parallélisation avec OpenMP, car chaque thread peut traiter un bloc indépendant, minimisant ainsi les conflits de mémoire.</p></li>
+</ol>
+<hr />
+<p>Ainsi, on peut faire une Comparaison de nos résultats pour différents types de permutation</p>
+<table style="width:100%;">
+<colgroup>
+<col style="width: 16%" />
+<col style="width: 17%" />
+<col style="width: 17%" />
+<col style="width: 17%" />
+<col style="width: 29%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Ordre des boucles</th>
+<th>Accès à A(i,k)</th>
+<th>Accès à B(k,j)</th>
+<th>Accès à C(i,j)</th>
+<th>Performance (basée sur MFlops)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>i, j, k</code> (naïf)</td>
+<td>Séquentiel</td>
+<td>Non séquentiel</td>
+<td>Séquentiel</td>
+<td>Mauvais (1010.2 MFlops)</td>
+</tr>
+<tr class="even">
+<td><code>j, i, k</code></td>
+<td>Non séquentiel</td>
+<td>Non séquentiel</td>
+<td>Séquentiel</td>
+<td>Mauvais (989.809 MFlops)</td>
+</tr>
+<tr class="odd">
+<td><code>i, k, j</code></td>
+<td>Séquentiel</td>
+<td>Séquentiel</td>
+<td>Non séquentiel</td>
+<td>Médiocre (304.761 MFlops)</td>
+</tr>
+<tr class="even">
+<td><code>k, i, j</code></td>
+<td>Séquentiel</td>
+<td>Non séquentiel</td>
+<td>Séquentiel</td>
+<td>Médiocre (292.822 MFlops)</td>
+</tr>
+<tr class="odd">
+<td><code>j, k, i</code></td>
+<td>Non séquentiel</td>
+<td>Séquentiel</td>
+<td>Séquentiel</td>
+<td>Très bon (2635.49 MFlops)</td>
+</tr>
+<tr class="even">
+<td><code>k, j, i</code> (optimal)</td>
+<td><strong>Séquentiel</strong></td>
+<td><strong>Séquentiel</strong></td>
+<td><strong>Séquentiel</strong></td>
+<td><strong>Excellent (3520.94 MFlops)</strong></td>
+</tr>
+</tbody>
+</table>
+<h3 id="omp-sur-la-meilleure-boucle">OMP sur la meilleure boucle</h3>
+<p><code>make TestProduct.exe &amp;&amp; OMP_NUM_THREADS=8 ./TestProduct.exe 1024</code></p>
+<pre><code>//Code considéré: ProdMatMat.cpp
+
+#include &lt;algorithm&gt;
+#include &lt;cassert&gt;
+#include &lt;iostream&gt;
+#include &lt;thread&gt;
+#if defined(_OPENMP)
+#include &lt;omp.h&gt;
+#endif
+#include &quot;ProdMatMat.hpp&quot;
+
+namespace {
+void prodSubBlocks(int iRowBlkA, int iColBlkB, int iColBlkA, int szBlock,
+                   const Matrix&amp; A, const Matrix&amp; B, Matrix&amp; C) {
+    // Ordre k -&gt; j -&gt; i pour optimiser l&#39;accès mémoire
+    #pragma omp parallel
+    for (int k = iColBlkA; k &lt; std::min(A.nbCols, iColBlkA + szBlock); ++k)
+      for (int j = iColBlkB; j &lt; std::min(B.nbCols, iColBlkB + szBlock); ++j)
+        for (int i = iRowBlkA; i &lt; std::min(A.nbRows, iRowBlkA + szBlock); ++i)
+          C(i, j) += A(i, k) * B(k, j);
+}
+const int szBlock = 32; // Taille de bloc adaptée au cache
+}  // namespace
+
+Matrix operator*(const Matrix&amp; A, const Matrix&amp; B) {
+  Matrix C(A.nbRows, B.nbCols, 0.0);
+
+  // Parallélisation sur les blocs de lignes de A (iRowBlkA)
+  #pragma omp parallel for
+  for (int iRowBlkA = 0; iRowBlkA &lt; A.nbRows; iRowBlkA += szBlock) {
+    // Parcours des blocs colonnes de B (j)
+    for (int iColBlkB = 0; iColBlkB &lt; B.nbCols; iColBlkB += szBlock) {
+      // Parcours des blocs colonnes de A (k)
+      for (int iColBlkA = 0; iColBlkA &lt; A.nbCols; iColBlkA += szBlock) {
+        prodSubBlocks(iRowBlkA, iColBlkB, iColBlkA, szBlock, A, B, C);
+      }
+    }
+  }
+  
+  return C;
+}</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th>OMP_NUM</th>
+<th>MFlops</th>
+<th>MFlops(n=2048)</th>
+<th>MFlops(n=512)</th>
+<th>MFlops(n=4096)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>3388.86</td>
+<td>2765.99</td>
+<td>3138.42</td>
+<td>2357.51</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>3385.66</td>
+<td>4968.66</td>
+<td>5838.37</td>
+<td>4418.62</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>3370.12</td>
+<td>7271.2</td>
+<td>7212.75</td>
+<td>6284.18</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>3354.99</td>
+<td>9314.27</td>
+<td>10447.2</td>
+<td>8168.77</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>3459.52</td>
+<td>12062.8</td>
+<td>10356.5</td>
+<td>9725.05</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td>3207.41</td>
+<td>13177.6</td>
+<td>9298.74</td>
+<td>11452.7</td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td>3468.93</td>
+<td>11470.7</td>
+<td>9421.53</td>
+<td>10137.1</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td>3396.06</td>
+<td>12610.9</td>
+<td>11959.9</td>
+<td>10993.8</td>
+</tr>
+</tbody>
+</table>
+<p><em>Tracer les courbes de speedup (pour chaque valeur de n), discuter les résultats.</em></p>
+<table>
+<thead>
+<tr class="header">
+<th>OMP_NUM</th>
+<th>T</th>
+<th>T(n=2048)</th>
+<th>T(n=512)</th>
+<th>T(n=4096)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>0.633688</td>
+<td>6.21111</td>
+<td>0.0855321</td>
+<td>58.2984</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>0.634289</td>
+<td>3.45764</td>
+<td>0.0459778</td>
+<td>31.1045</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>0.637213</td>
+<td>2.36273</td>
+<td>0.0372168</td>
+<td>21.8706</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>0.640087</td>
+<td>1.84447</td>
+<td>0.0256945</td>
+<td>16.8249</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>0.620745</td>
+<td>1.4242</td>
+<td>0.0259196</td>
+<td>14.1325</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td>0.669539</td>
+<td>1.30372</td>
+<td>0.0288679</td>
+<td>12.0006</td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td>0.619062</td>
+<td>1.49772</td>
+<td>0.0284917</td>
+<td>13.5581</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td>0.632346</td>
+<td>1.3623</td>
+<td>0.0224446</td>
+<td>12.5014</td>
+</tr>
+</tbody>
+</table>
+<p>Voici les tables de speedup pour chaque valeur de <code>n</code>, calculées comme</p>
+<p><br /><span class="math display">$$
+\text{Speedup} = \frac{T_{\text{seq}}}{T_{\text{par}}} \quad \text{où} \quad T_{\text{seq}} = T(\text{OMP\_NUM}=1).
+$$</span><br /></p>
+<hr />
+<ol type="a">
+<li><strong>Speedup pour ( n = 2048 )</strong></li>
+</ol>
+<table>
+<thead>
+<tr class="header">
+<th>OMP_NUM</th>
+<th>Speedup</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>1.000</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>1.797</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>2.629</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>3.367</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>4.362</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td>4.764</td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td>4.148</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td>4.559</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<ol start="2" type="a">
+<li><strong>Speedup pour ( n = 512 )</strong></li>
+</ol>
+<table>
+<thead>
+<tr class="header">
+<th>OMP_NUM</th>
+<th>Speedup</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>1.000</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>1.860</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>2.299</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>3.329</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>3.300</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td>2.963</td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td>3.002</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td>3.812</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<ol start="3" type="a">
+<li><strong>Speedup pour ( n = 4096 )</strong></li>
+</ol>
+<table>
+<thead>
+<tr class="header">
+<th>OMP_NUM</th>
+<th>Speedup</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>1.000</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>1.874</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>2.666</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>3.465</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>4.125</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td>4.858</td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td>4.300</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td>4.663</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<ol start="4" type="1">
+<li><strong>Courbes de Speedup</strong></li>
+</ol>
+<ul>
+<li><strong>Axe X</strong> : Nombre de threads (<code>OMP_NUM</code>).</li>
+<li><strong>Axe Y</strong> : Speedup (logique linéaire).</li>
+<li><strong>Courbes</strong> : Une par valeur de ( n ).</li>
+</ul>
+<hr />
+<h4 id="discussion-des-résultats"><strong>Discussion des résultats</strong></h4>
+<ul>
+<li>Impact de la taille du problème ( n ):
+<ul>
+<li><strong>( n = 4096 )</strong> : Meilleur scaling grâce à un grain de calcul plus gros. Le speedup atteint <strong>4.86</strong> avec 6 threads (efficacité ≈ 81%).</li>
+<li><strong>( n = 2048 )</strong> : Scaling correct mais moins efficace que ( n = 4096 ). Pic à <strong>4.76</strong> avec 6 threads.</li>
+<li><strong>( n = 512 )</strong> : Scaling médiocre. Le speedup chute dès 5 threads, remonte à 8 threads (<strong>3.81</strong>), signe de surcoût parallèle (surcharge de gestion des threads pour un petit problème).</li>
+</ul></li>
+<li>Efficacité des threads supplémentaires :
+<ul>
+<li>Pour ( n = 4096 ), chaque thread supplémentaire améliore le speedup jusqu’à 6 threads.</li>
+<li>Pour ( n = 512 ), au-delà de 4 threads, les gains sont erratiques (surparallelisme).</li>
+</ul></li>
+<li>Valeurs de MFlops : Les MFlops suivent le speedup. Par exemple, pour ( n = 4096 ), les MFlops passent de <strong>2357.51</strong> (1 thread) à <strong>11452.7</strong> (6 threads), confirmant une accélération réelle.</li>
+</ul>
+<hr />
+<h4 id="conclusion"><strong>Conclusion</strong></h4>
+<ul>
+<li><strong>Grands ( n )</strong> : Le parallélisme est efficace (speedup proche de 5 pour 8 threads).</li>
+<li><strong>Petits ( n )</strong> : Le surcoût des threads domine (speedup limité à ≈3.8).</li>
+<li><strong>Optimal</strong> : Utiliser 4–6 threads pour ( n = 2048/4096 ), et 4–8 threads pour ( n = 512 ) (selon les ressources disponibles). Ainsi, en augmentant le nombre de threads, le temps d’exécution devrait diminuer, indiquant une amélioration des performances. Cependant, il peut y avoir un plateau ou une légère augmentation du temps à partir d’un certain nombre de threads en raison de la surcharge de gestion des threads et de la contention pour les ressources.</li>
+</ul>
+<figure>
+<img src="/Cours_Ensta_2025/travaux_diriges/tp1/sources/image1.png" alt="" /><figcaption>Image Description</figcaption>
+</figure>
+<h4 id="réponse-à-la-question-4">Réponse à la question 4:</h4>
+<p>Il est possible d’améliorer le résultat obtenu car :</p>
+<ul>
+<li>Des algorithmes comme la multiplication par blocs permettent de réduire le temps d’accès à la mémoire et d’améliorer les performances.</li>
+<li>Une meilleure répartition des tâches entre les threads peut réduire la contention et maximiser l’utilisation des ressources.</li>
+<li>Avec des bibliothèques comme BLAS exploitent des techniques avancées et des optimisations spécifiques au matériel, offrant des performances supérieures.</li>
+</ul>
+<h3 id="produit-par-blocs">Produit par blocs</h3>
+<p><code>make TestProduct.exe &amp;&amp; ./TestProduct.exe 1024</code></p>
+<pre><code>//Code considéré
+
+#include &lt;algorithm&gt;
+#include &lt;cassert&gt;
+#include &lt;iostream&gt;
+#include &lt;thread&gt;
+#if defined(_OPENMP)
+#include &lt;omp.h&gt;
+#endif
+#include &quot;ProdMatMat.hpp&quot;
+
+namespace {
+void prodSubBlocks(int iRowBlkA, int iColBlkB, int iColBlkA, int szBlock,
+                   const Matrix&amp; A, const Matrix&amp; B, Matrix&amp; C) {
+    const int iEnd = std::min(A.nbRows, iRowBlkA + szBlock);
+    const int kEnd = std::min(A.nbCols, iColBlkA + szBlock);
+    const int jEnd = std::min(B.nbCols, iColBlkB + szBlock);
+    
+    // Optimisation mémoire avec pré-chargement des blocs
+    for (int k = iColBlkA; k &lt; kEnd; ++k) {
+        for (int j = iColBlkB; j &lt; jEnd; ++j) {
+            const double b_kj = B(k, j); // Pré-chargement car accès multiple à B
+            for (int i = iRowBlkA; i &lt; iEnd; ++i) {
+                C(i, j) += A(i, k) * b_kj;
+            }
+        }
+    }
+}
+
+}  // namespace
+
+Matrix operator*(const Matrix&amp; A, const Matrix&amp; B) {
+  Matrix C(A.nbRows, B.nbCols, 0.0);
+  
+  // Paramètre clé à optimiser selon votre architecture
+  constexpr int szBlock = 1024; // Valeur initiale à tester
+  
+  // Parcours des blocs dans l&#39;ordre optimal pour la localité mémoire
+  for (int iRowBlkA = 0; iRowBlkA &lt; A.nbRows; iRowBlkA += szBlock)
+    for (int iColBlkA = 0; iColBlkA &lt; A.nbCols; iColBlkA += szBlock)
+      for (int iColBlkB = 0; iColBlkB &lt; B.nbCols; iColBlkB += szBlock)
+        prodSubBlocks(iRowBlkA, iColBlkB, iColBlkA, szBlock, A, B, C);
+  
+  return C;
+}</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th>szBlock</th>
+<th>MFlops</th>
+<th>MFlops(n=2048)</th>
+<th>MFlops(n=512)</th>
+<th>MFlops(n=4096)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>origine (=max)</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td>32</td>
+<td>3460.02</td>
+<td>3245.1</td>
+<td>3053.83</td>
+<td>2600.71</td>
+</tr>
+<tr class="odd">
+<td>64</td>
+<td>3833.69</td>
+<td>3429.22</td>
+<td>3122.58</td>
+<td>3260.02</td>
+</tr>
+<tr class="even">
+<td>128</td>
+<td>3997.53</td>
+<td>4026.67</td>
+<td>3198.56</td>
+<td>3445.53</td>
+</tr>
+<tr class="odd">
+<td>256</td>
+<td>3732.56</td>
+<td>3376.74</td>
+<td>3119.95</td>
+<td>3421.45</td>
+</tr>
+<tr class="even">
+<td>512</td>
+<td>3802.35</td>
+<td>3560.99</td>
+<td>3139.71</td>
+<td>3740.98</td>
+</tr>
+<tr class="odd">
+<td>1024</td>
+<td>3873.44</td>
+<td>3622.03</td>
+<td>3394.57</td>
+<td>3570.16</td>
+</tr>
+</tbody>
+</table>
+<p><em>Discutons les résultats.</em> Le choix de la taille de bloc (<code>szBlock</code>) influence directement l’utilisation des caches (L1, L2, L3) du processeur. Pour des petites matrices, une petite taille de bloc (ex : 32 ou 64) permet de tenir les données dans le cache L1(n ≤ 1024), rapide mais limité en taille. Pour des matrices plus grandes, des blocs plus gros (128 ou 512) exploitent mieux les caches L2(1024 &lt; n ≤ 2048) et L3(n &gt; 2048), réduisant les accès à la mémoire principale, plus lente. Les résultats montrent que <strong>szBlock=128</strong> est optimal pour des matrices de taille moyenne (n=1024-2048), tandis que <strong>szBlock=512</strong> est meilleur pour les très grandes matrices (n=4096), car il utilise efficacement le cache L3. Ainsi, on peut résumer comme ceci: - <strong>szBlock=128</strong> : Meilleur compromis pour n=1024-2048 (≈4000 MFlops).<br />
+- <strong>szBlock=512</strong> : Optimal pour n=4096 (≈3740 MFlops).<br />
+En conclusion, on pourra utiliser <strong>szBlock=128</strong> par défaut, et passez à <strong>szBlock=512</strong> pour n ≥ 4096.</p>
+<h3 id="bloc-omp">Bloc + OMP</h3>
+<pre><code>//Code considéré
+
+#include &lt;algorithm&gt;
+#include &lt;cassert&gt;
+#include &lt;iostream&gt;
+#if defined(_OPENMP)
+#include &lt;omp.h&gt;
+#endif
+#include &quot;ProdMatMat.hpp&quot;
+
+namespace {
+void prodSubBlocks(int iRowBlkA, int iColBlkB, int iColBlkA, int szBlock,
+                   const Matrix&amp; A, const Matrix&amp; B, Matrix&amp; C) {
+    const int iEnd = std::min(A.nbRows, iRowBlkA + szBlock);
+    const int kEnd = std::min(A.nbCols, iColBlkA + szBlock);
+    const int jEnd = std::min(B.nbCols, iColBlkB + szBlock);
+    
+    // Optimisation mémoire avec pré-chargement des blocs
+    for (int k = iColBlkA; k &lt; kEnd; ++k) {
+        for (int j = iColBlkB; j &lt; jEnd; ++j) {
+            const double b_kj = B(k, j); // Pré-chargement car accès multiple à B
+            #pragma omp simd // Vectorisation forcée
+            for (int i = iRowBlkA; i &lt; iEnd; ++i) {
+                C(i, j) += A(i, k) * b_kj;
+            }
+        }
+    }
+}
+
+// Taille de bloc adaptée à la hiérarchie mémoire de mon pd
+constexpr int szBlock = 256; // Optimisé pour L2 cache (1.5MB/core)
+}  // namespace
+
+Matrix operator*(const Matrix&amp; A, const Matrix&amp; B) {
+  Matrix C(A.nbRows, B.nbCols, 0.0);
+
+  #pragma omp parallel for schedule(dynamic) // Charge dynamique pour déséquilibres
+  for (int iRowBlkA = 0; iRowBlkA &lt; A.nbRows; iRowBlkA += szBlock) {
+    for (int iColBlkA = 0; iColBlkA &lt; A.nbCols; iColBlkA += szBlock) {
+      for (int iColBlkB = 0; iColBlkB &lt; B.nbCols; iColBlkB += szBlock) {
+        prodSubBlocks(iRowBlkA, iColBlkB, iColBlkA, szBlock, A, B, C);
+      }
+    }
+  }
+  
+  return C;
+}</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th>szBlock</th>
+<th>OMP_NUM</th>
+<th>MFlops</th>
+<th>MFlops(n=2048)</th>
+<th>MFlops(n=512)</th>
+<th>MFlops(n=4096)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1024</td>
+<td>1</td>
+<td>7066.88</td>
+<td>6499.97</td>
+<td>6666.74</td>
+<td>6362.83</td>
+</tr>
+<tr class="even">
+<td>1024</td>
+<td>8</td>
+<td>7067.53</td>
+<td>7486.49</td>
+<td>5816.2</td>
+<td>4377.09</td>
+</tr>
+<tr class="odd">
+<td>512</td>
+<td>1</td>
+<td>7636.49</td>
+<td>6852.32</td>
+<td>6196.14</td>
+<td>7292.27</td>
+</tr>
+<tr class="even">
+<td>512</td>
+<td>8</td>
+<td>12194.4</td>
+<td>18900</td>
+<td>5908.53</td>
+<td>11243.2</td>
+</tr>
+</tbody>
+</table>
+<p><em>Discutons les résultats.</em><br />
+Les résultats montrent l’impact de la parallélisation (OpenMP) et de la taille de bloc (szBlock) sur les performances. Avec szBlock=512, la parallélisation sur 8 threads améliore significativement les performances pour n=2048 et n=4096, grâce à une meilleure utilisation des caches et des cœurs CPU. Cependant, pour n=512, les performances chutent avec 8 threads, probablement à cause du surcoût de gestion des threads pour une petite taille de problème. La taille de bloc szBlock=512 est plus efficace que szBlock=1024, car elle exploite mieux les caches L2/L3 sans dépasser leur capacité.</p>
+<p>Meilleure configuration :</p>
+<p>n=512 : szBlock=512, 1 thread (6196 MFlops).</p>
+<p>n=2048 : szBlock=512, 8 threads (18900 MFlops).</p>
+<p>n=4096 : szBlock=512, 8 threads (11243 MFlops).</p>
+<p>Conclusion :</p>
+<pre><code>Utilisez szBlock=512 pour maximiser les performances.
+
+Activez la parallélisation (8 threads) pour n ≥ 2048, mais on doit la désactiver pour n=512.</code></pre>
+<h3 id="comparaison-avec-blas-eigen-et-numpy">Comparaison avec BLAS, Eigen et numpy</h3>
+<p><em>Comparons les performances avec un calcul similaire utilisant les bibliothèques d’algèbre linéaire BLAS, Eigen et/ou numpy.</em></p>
+<p>Les bibliothèques optimisées comme BLAS, Eigen ou numpy exploitent des techniques avancées (vectorisation SIMD, gestion fine des caches, parallélisme multicœur) pour maximiser les performances. En comparaison, une implémentation manuelle (même optimisée) atteint rarement leur efficacité, sauf dans des cas particuliers : AInsi, on remarque que, pour de petites matrices : Notre code peut rivaliser ces bibliothèques à très petite échelle (ex : n ≤ 1024), car le surcoût d’appel des fonctions BLAS/numpy domine.(les valeurs des MFLOPs sont légèrement élevées pour ./test_product_matrice blas (3578 MFLOPs) pour n=1024, ainsi notre code optimisé par bloc a un rapport de temps quasiment 3 fois supérieur à celui fait avec Blas, mais en règle générale, blas domine pour des matrices assez grandes)</p>
+<p>Cependant, BLAS/Eigen et numpy (via OpenBLAS/MKL) devraient être 2 à 10× plus rapides pour n ≥ 2048, grâce à Une exploitation optimale des instructions processeur (AVX, FMA).</p>
+<p>Conclusion : - Pour les grandes matrices, il est préférable de privilégier BLAS/Eigen/numpy. - Pour les petites tailles ou besoins spécifiques (contraintes mémoire, matrices structurées), une implémentation manuelle peut rivaliser, mais cela reste rare et dépend de l’optimisation matérielle.</p>
+<h1 id="tips">Tips</h1>
+<pre><code>    env
+    OMP_NUM_THREADS=4 ./produitMatriceMatrice.exe</code></pre>
+<pre><code>    $ for i in $(seq 1 4); do elap=$(OMP_NUM_THREADS=$i ./TestProductOmp.exe|grep &quot;Temps CPU&quot;|cut -d &quot; &quot; -f 7); echo -e &quot;$i\t$elap&quot;; done &gt; timers.out</code></pre>
+</body>
+</html>
