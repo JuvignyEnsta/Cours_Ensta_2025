@@ -13,7 +13,7 @@ class MandelbrotSet:
     escape_radius:  float = 2.0
 
     def __contains__(self, c: complex) -> bool:
-        return self.stability(c) == 1
+        return self.stability(c) == 1 # stability(c) == 1 <=> c appartient à l'ensemble de Mandelbrot
 
     def convergence(self, c: complex, smooth=False, clamp=True) -> float:
         value = self.count_iterations(c, smooth)/self.max_iterations

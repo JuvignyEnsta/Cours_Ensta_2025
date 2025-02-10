@@ -241,13 +241,13 @@ Matrix operator*(const Matrix& A, const Matrix& B) {
 | OMP_NUM | T        | T(n=2048) | T(n=512)  | T(n=4096) |
 | ------- | -------- | --------- | --------- | --------- |
 | 1       | 0.633688 | 6.21111   | 0.0855321 | 58.2984   |
-| 2       | 0.634289 | 3.45764   | 0.0459778 | 31.1045   |
-| 3       | 0.637213 | 2.36273   | 0.0372168 | 21.8706   |
-| 4       | 0.640087 | 1.84447   | 0.0256945 | 16.8249   |
-| 5       | 0.620745 | 1.4242    | 0.0259196 | 14.1325   |
-| 6       | 0.669539 | 1.30372   | 0.0288679 | 12.0006   |
-| 7       | 0.619062 | 1.49772   | 0.0284917 | 13.5581   |
-| 8       | 0.632346 | 1.3623    | 0.0224446 | 12.5014   |
+| 2       | 0.352244 | 3.45764   | 0.0459778 | 31.1045   |
+| 3       | 0.211581 | 2.36273   | 0.0372168 | 21.8706   |
+| 4       | 0.158819 | 1.84447   | 0.0256945 | 16.8249   |
+| 5       | 0.209761 | 1.4242    | 0.0259196 | 14.1325   |
+| 6       | 0.128095 | 1.30372   | 0.0288679 | 12.0006   |
+| 7       | 0.157477 | 1.49772   | 0.0284917 | 13.5581   |
+| 8       | 0.158342 | 1.3623    | 0.0224446 | 12.5014   |
 
 
 Voici les tables de speedup pour chaque valeur de `n`, calculées comme 
@@ -260,16 +260,16 @@ $$
 ---
 a. **Speedup pour \( n = 1024 \)** 
 
-| OMP_NUM | T(1024) | Speedup (1024) |
-|---------|---------|----------------|
+| OMP_NUM | T(1024)  | Speedup (1024) |
+|---------|----------|----------------|
 | 1       | 0.633688 | 1.000          |
-| 2       | 0.634289 | 0.999          |
-| 3       | 0.637213 | 0.995          |
-| 4       | 0.640087 | 0.990          |
-| 5       | 0.620745 | 1.021          |
-| 6       | 0.669539 | 0.947          |
-| 7       | 0.619062 | 1.024          |
-| 8       | 0.632346 | 1.002          |
+| 2       | 0.352244 | 1.799          |
+| 3       | 0.211581 | 2.995          |
+| 4       | 0.158819 | 3.990          |
+| 5       | 0.209761 | 3.021          |
+| 6       | 0.128095 | 4.947          |
+| 7       | 0.157477 | 4.024          |
+| 8       | 0.158342 | 4.002          |
 
 
 
@@ -318,14 +318,15 @@ d. **Speedup pour \( n = 4096 \)**
 
 ---
 ```
-// code pour le tracé
+
+// code pour le tracé: courbe.py
 
 import matplotlib.pyplot as plt
 
 # Données
 omp_num = [1, 2, 3, 4, 5, 6, 7, 8]
 
-speedup_1024 = [1.000, 0.999, 0.995, 0.990, 1.021, 0.947, 1.024, 1.002]
+speedup_1024 = [1.000, 1.799, 2.995, 3.990, 3.021, 4.947, 4.024, 4.002]
 speedup_2048 = [1.000, 1.797, 2.629, 3.367, 4.362, 4.764, 4.148, 4.559]
 speedup_512 = [1.000, 1.860, 2.299, 3.329, 3.300, 2.963, 3.002, 3.812]
 speedup_4096 = [1.000, 1.874, 2.666, 3.465, 4.125, 4.858, 4.300, 4.663]
@@ -542,13 +543,264 @@ Conclusion :
 *Comparons les performances avec un calcul similaire utilisant les bibliothèques d'algèbre linéaire BLAS, Eigen et/ou numpy.*
 
 Les bibliothèques optimisées comme BLAS, Eigen ou numpy exploitent des techniques avancées (vectorisation SIMD, gestion fine des caches, parallélisme multicœur) pour maximiser les performances. En comparaison, une implémentation manuelle (même optimisée) atteint rarement leur efficacité, sauf dans des cas particuliers :
-AInsi, on remarque que, pour de petites matrices : Notre code peut rivaliser ces bibliothèques à très petite échelle (ex : n ≤ 1024), car le surcoût d’appel des fonctions BLAS/numpy domine.(les valeurs des MFLOPs sont légèrement élevées pour ./test_product_matrice blas (3578 MFLOPs) pour n=1024, ainsi notre code optimisé par bloc a un rapport de temps quasiment 3 fois supérieur à celui fait avec Blas, mais en règle générale, blas domine pour des matrices assez grandes)
+
+Ainsi, on remarque que, pour de petites matrices : Notre code peut rivaliser ces bibliothèques à très petite échelle (ex : n ≤ 1024), car le surcoût d’appel des fonctions BLAS/numpy domine.(les valeurs des MFLOPs sont légèrement élevées pour ./test_product_matrice blas (3578 MFLOPs) pour n=1024, ainsi notre code optimisé par bloc a un rapport de temps quasiment 3 fois supérieur à celui fait avec Blas, mais en règle générale, blas domine pour des matrices assez grandes)
 
 Cependant, BLAS/Eigen et numpy (via OpenBLAS/MKL) devraient être 2 à 10× plus rapides pour n ≥ 2048, grâce à Une exploitation optimale des instructions processeur (AVX, FMA).
 
-Conclusion :
+**Conclusion :**
 - Pour les grandes matrices, il est préférable de privilégier BLAS/Eigen/numpy.
 - Pour les petites tailles ou besoins spécifiques (contraintes mémoire, matrices structurées), une implémentation manuelle peut rivaliser, mais cela reste rare et dépend de l’optimisation matérielle.
+
+
+---
+
+## Parallélisation MPI
+
+Ecrivons en langage C les programmes suivants.
+
+### 2.1 Circulation d’un jeton dans un anneau
+Ecrivez un programme tel que :
+1. le processus de rang zéro initialise un jeton à 1 puis l’envoie au processus de rang un;
+2. le processus de rang un reçoit le jeton, l’incrémente de un puis l’envoie au processus de rang deux;
+3. …
+4. le processus de rang p reçoit le jeton, l’incrémente de un puis l’envoie au processus de rang p + 1
+(0 < p < nbp − 1);
+5. …
+6. le processus de rang nbp − 1 reçoit le jeton, l’incrémente de un et l’envoie au processus de rang zéro;
+7. le processus de rang zéro reçoit le jeton du processus nbp − 1 et l’aﬀiche à l’écran.
+
+```jeton.c
+#include <mpi.h>
+#include <stdio.h>
+
+int main(int argc, char *argv[]) {
+    int rank; // Rang du processus
+    int nbp;  // Nombre total de processus
+    int jeton; // Valeur du jeton
+
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &nbp);
+
+    if (nbp < 2) {
+        if (rank == 0) {
+            printf("Erreur : Ce programme nécessite au moins 2 processus MPI.\n");
+        }
+        MPI_Finalize();
+        return 1;
+    }
+
+    if (rank == 0) {
+        jeton = 1;
+        printf("Le processus %d initialise le jeton avec la valeur %d et l'envoie au processus 1.\n", rank, jeton);
+
+        MPI_Ssend(&jeton, 1, MPI_INT, 1, 0, MPI_COMM_WORLD);
+        MPI_Recv(&jeton, 1, MPI_INT, nbp - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+        printf("Le processus %d reçoit le jeton final avec la valeur %d.\n", rank, jeton);
+    } else {
+        MPI_Recv(&jeton, 1, MPI_INT, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        printf("Le processus %d reçoit le jeton avec la valeur %d depuis le processus %d.\n", rank, jeton, rank - 1);
+
+        jeton++;
+
+        int nextp = (rank + 1) % nbp; // Calcul du rang du processus suivant
+        MPI_Ssend(&jeton, 1, MPI_INT, nextp, 0, MPI_COMM_WORLD);
+        printf("Le processus %d envoie le jeton avec la valeur %d au processus %d.\n", rank, jeton, nextp);
+    }
+
+    MPI_Finalize();
+    return 0;
+}
+
+```
+---
+
+### 2.2 Calcul très approché de pi
+On veut calculer la valeur de pi à l’aide de l’algorithme stochastique suivant :
+• on considère le carré unité [−1; 1] × [−1; 1] dans lequel on inscrit le cercle unité de centre (0, 0) et de
+rayon 1;
+• on génère des points aléatoirement dans le carré unité;
+• on compte le nombre de points générés dans le carré qui sont aussi dans le cercle;
+• soit r ce nombre de points dans le cercle divisé par le nombre de points total dans le carré, on calcule
+alors pi comme π = 4.r.
+Remarquez que l’erreur faite sur pi décroit quand le nombre de points générés augmente.
+
+1. Parallélisons en mémoire partagée le programme séquentiel en C à l’aide d’OpenMP
+2. Mesurons l’accélération obtenue en utilisant un nombre variable de coeurs de calcul
+3. Parallélisons en mémoire distribuée le programme séquentiel en C à l’aide de MPI
+4. Mesurons l’accélération obtenue en utilisant un nombre variable de processus
+
+```
+# include <chrono>
+# include <random>
+# include <cstdlib>
+# include <sstream>
+# include <string>
+# include <fstream>
+# include <iostream>
+# include <iomanip>
+# include <mpi.h>
+# include <omp.h>
+
+// Attention , ne marche qu'en C++ 11 ou supérieur :
+double approximate_pi_sequential(unsigned long nbSamples) 
+{
+    typedef std::chrono::high_resolution_clock myclock;
+    myclock::time_point beginning = myclock::now();
+    myclock::duration d = beginning.time_since_epoch();
+    unsigned seed = d.count();
+    std::default_random_engine generator(seed);
+    std::uniform_real_distribution<double> distribution(-1.0, 1.0);
+    unsigned long nbDarts = 0;
+
+    for (unsigned sample = 0; sample < nbSamples; ++sample) {
+        double x = distribution(generator);
+        double y = distribution(generator);
+        // Test if the dart is in the unit disk
+        if (x * x + y * y <= 1) nbDarts++;
+    }
+
+    // Number of nbDarts throwed in the unit disk
+    double ratio = double(nbDarts) / double(nbSamples);
+    return 4 * ratio;
+}
+
+double approximate_pi_parallel(unsigned long nbSamples) 
+{
+    typedef std::chrono::high_resolution_clock myclock;
+    myclock::time_point beginning = myclock::now();
+    myclock::duration d = beginning.time_since_epoch();
+    unsigned seed = d.count();
+    std::default_random_engine generator(seed);
+    std::uniform_real_distribution<double> distribution(-1.0, 1.0);
+    unsigned long nbDarts = 0;
+
+    #pragma omp parallel
+    {
+        std::default_random_engine thread_generator(seed + omp_get_thread_num());
+        unsigned long thread_nbDarts = 0;
+
+        #pragma omp for
+        for (unsigned sample = 0; sample < nbSamples; ++sample) {
+            double x = distribution(thread_generator);
+            double y = distribution(thread_generator);
+            // Test if the dart is in the unit disk
+            if (x * x + y * y <= 1) thread_nbDarts++;
+        }
+
+        #pragma omp atomic
+        nbDarts += thread_nbDarts;
+    }
+
+    // Number of nbDarts throwed in the unit disk
+    double ratio = double(nbDarts) / double(nbSamples);
+    return 4 * ratio;
+}
+
+int main(int nargs, char* argv[])
+{
+    // On initialise le contexte MPI qui va s'occuper :
+    //    1. Créer un communicateur global, COMM_WORLD qui permet de gérer
+    //       et assurer la cohésion de l'ensemble des processus créés par MPI;
+    //    2. d'attribuer à chaque processus un identifiant ( entier ) unique pour
+    //       le communicateur COMM_WORLD
+    //    3. etc...
+    MPI_Init(&nargs, &argv);
+    // Pour des raisons de portabilité qui débordent largement du cadre
+    // de ce cours, on préfère toujours cloner le communicateur global
+    // MPI_COMM_WORLD qui gère l'ensemble des processus lancés par MPI.
+    MPI_Comm globComm;
+    MPI_Comm_dup(MPI_COMM_WORLD, &globComm);
+    // On interroge le communicateur global pour connaître le nombre de processus
+    // qui ont été lancés par l'utilisateur :
+    int nbp;
+    MPI_Comm_size(globComm, &nbp);
+    // On interroge le communicateur global pour connaître l'identifiant qui
+    // m'a été attribué ( en tant que processus ). Cet identifiant est compris
+    // entre 0 et nbp-1 ( nbp étant le nombre de processus qui ont été lancés par
+    // l'utilisateur )
+    int rank;
+    MPI_Comm_rank(globComm, &rank);
+    // Création d'un fichier pour ma propre sortie en écriture :
+    std::stringstream fileName;
+    fileName << "Output" << std::setfill('0') << std::setw(5) << rank << ".txt";
+    std::ofstream output(fileName.str().c_str());
+
+    // Nombre total d'échantillons à lancer
+    unsigned long totalSamples = 1000000000;
+    // Nombre d'échantillons par processus
+    unsigned long samplesPerProcess = totalSamples / nbp;
+
+    // Mesure du temps d'exécution séquentiel
+    double start_time_seq = omp_get_wtime();
+    double pi_seq = approximate_pi_sequential(samplesPerProcess);
+    double end_time_seq = omp_get_wtime();
+    double time_seq = end_time_seq - start_time_seq;
+
+    if (rank == 0) {
+        std::cout << std::fixed << std::setprecision(15);
+        std::cout << "Sequential Approximation of Pi = " << pi_seq << std::endl;
+        std::cout << "Sequential Execution Time = " << time_seq << " seconds" << std::endl;
+    }
+
+    // Mesure du temps d'exécution parallèle avec différents nombres de threads
+    for (int num_threads = 1; num_threads <= 8; num_threads *= 2) {
+        omp_set_num_threads(num_threads);
+
+        double start_time_par = omp_get_wtime();
+        double pi_par = approximate_pi_parallel(samplesPerProcess);
+        double end_time_par = omp_get_wtime();
+        double time_par = end_time_par - start_time_par;
+
+        double speedup = time_seq / time_par;
+
+        if (rank == 0) {
+            std::cout << "Parallel Approximation of Pi with " << num_threads << " threads = " << pi_par << std::endl;
+            std::cout << "Parallel Execution Time with " << num_threads << " threads = " << time_par << " seconds" << std::endl;
+            std::cout << "Speedup with " << num_threads << " threads = " << speedup << std::endl;
+        }
+    }
+
+    output.close();
+    // A la fin du programme, on doit synchroniser une dernière fois tous les processus
+    // afin qu'aucun processus ne se termine pendant que d'autres processus continue à
+    // tourner. Si on oublie cet instruction, on aura une plantage assuré des processus
+    // qui ne seront pas encore terminés.
+    MPI_Finalize();
+    return EXIT_SUCCESS;
+}
+```
+![Image Description](/Cours_Ensta_2025/travaux_diriges/tp1/sources/image2.png)
+
+
+5. Paralléliser en mémoire distribuée le programme séquentiel en Python à l’aide de mpi4py
+6. Mesurez l’accélération obtenue en utilisant un nombre variable de processus
+
+| Nombre de processus | Temps d'exécution (s) | Approximation de Pi | Accélération |
+|---------------------|-----------------------|---------------------|--------------|
+| 1                   | 8.043370246887207     | 3.1415367           | 1.00         |
+| 2                   | 5.322420597076416     | 3.1416862           | 1.51         |
+| 4                   | 4.131045341491699     | 3.1418061           | 1.95         |
+
+
+### 2.3 Diffusion d’un entier dans un réseau hypercube
+
+1. Écrivons un programme en C qui diffuse un entier dans un hyper cube de dimension 1 : **Voir hypercube1.c**
+2. Diffusons le jeton généré par la tâche 0 dans un hypercube de dimension 2 de manière que cette diffusion se fasse en un minimum d’étapes (et donc un maximum de communications simultanées: **Voir hypercube2.c**
+entre tâches).
+3. Faire de même pour un hypercube de dimension 3: **Voir hypercube3.c**
+4. Écrire le cas général quand le cube est de dimension d. Le nombre d’étapes pour diffuser le jeton devra être égal à la dimension de l’hypercube: **Voir hypercube.c**
+5. Mesurer l’accélération obtenue pour la diffusion d’un entier sur un tel réseau.
+
+| Nombre de processus | Temps d'exécution (s) | Accélération |
+|---------------------|-----------------------|--------------|
+| 1                   | 0.00001               | 1.00         |
+| 2                   | 0.000021              | 0.476        |
+| 4                   | 0.000035              | 0.285        |
+
+
 
 # Tips
 
