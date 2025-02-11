@@ -337,7 +337,7 @@ rank = comm.Get_rank()
 size = comm.Get_size()
 
 # --- Paramètres du problème ---
-dim = 120             # Dimension de la matrice (dim x dim)
+dim = 1024             # Dimension de la matrice (dim x dim)
 Nloc = dim // size    # Nombre de colonnes par processus (on suppose dim divisible par size)
 
 # --- Détermination de la portion locale ---
