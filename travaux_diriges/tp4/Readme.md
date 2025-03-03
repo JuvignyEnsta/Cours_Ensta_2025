@@ -1,4 +1,4 @@
- Processeur 0  Processeur 1
+Processeur 0  Processeur 1
 1- Affichage / calcul : séparer l'affichage et le calcul  
 - Séquentiel 
 Calcul1 - Afficge 1 - calcul 2 - Affiche 2
@@ -8,7 +8,10 @@ Calcul1 Affiche 1     Affiche2
         Calcul 2      Calcul 3
 
 Afiche 0    Affiche 1     
-    Calcul1     Calcul2   
+    Calcul1     Calcul2
+
+1.2 Affichage / calcul N générations
+       
 2- D/D : processeur 0 affiche, P1 et P2 calculent
 
 3- DD + AC (AC= Affichage - calcul)
