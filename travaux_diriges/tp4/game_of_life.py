@@ -3,16 +3,16 @@ Le jeu de la vie
 ################
 Le jeu de la vie est un automate cellulaire inventé par Conway se basant normalement sur une grille infinie
 de cellules en deux dimensions. Ces cellules peuvent prendre deux états :
-    - un état vivant
-    - un état mort
+- un état vivant
+- un état mort
 A l'initialisation, certaines cellules sont vivantes, d'autres mortes.
 Le principe du jeu est alors d'itérer de telle sorte qu'à chaque itération, une cellule va devoir interagir avec
 les huit cellules voisines (gauche, droite, bas, haut et les quatre en diagonales.) L'interaction se fait selon les
 règles suivantes pour calculer l'irération suivante :
-    - Une cellule vivante avec moins de deux cellules voisines vivantes meurt ( sous-population )
-    - Une cellule vivante avec deux ou trois cellules voisines vivantes reste vivante
-    - Une cellule vivante avec plus de trois cellules voisines vivantes meurt ( sur-population )
-    - Une cellule morte avec exactement trois cellules voisines vivantes devient vivante ( reproduction )
+- Une cellule vivante avec moins de deux cellules voisines vivantes meurt ( sous-population )
+- Une cellule vivante avec deux ou trois cellules voisines vivantes reste vivante
+- Une cellule vivante avec plus de trois cellules voisines vivantes meurt ( sur-population )
+- Une cellule morte avec exactement trois cellules voisines vivantes devient vivante ( reproduction )
 
 Pour ce projet, on change légèrement les règles en transformant la grille infinie en un tore contenant un
 nombre fini de cellules. Les cellules les plus à gauche ont pour voisines les cellules les plus à droite
@@ -21,21 +21,21 @@ et inversement.
 
 On itère ensuite pour étudier la façon dont évolue la population des cellules sur la grille.
 """
-import pygame  as pg
-import numpy   as np
-
+import pygame as pg
+import numpy as np
+from mpi4py import MPI
 
 class Grille:
     """
     Grille torique décrivant l'automate cellulaire.
     En entrée lors de la création de la grille :
-        - dimensions est un tuple contenant le nombre de cellules dans les deux directions (nombre lignes, nombre colonnes)
-        - init_pattern est une liste de cellules initialement vivantes sur cette grille (les autres sont considérées comme mortes)
-        - color_life est la couleur dans laquelle on affiche une cellule vivante
-        - color_dead est la couleur dans laquelle on affiche une cellule morte
+    - dimensions est un tuple contenant le nombre de cellules dans les deux directions (nombre lignes, nombre colonnes)
+    - init_pattern est une liste de cellules initialement vivantes sur cette grille (les autres sont considérées comme mortes)
+    - color_life est la couleur dans laquelle on affiche une cellule vivante
+    - color_dead est la couleur dans laquelle on affiche une cellule morte
     Si aucun pattern n'est donné, on tire au hasard quels sont les cellules vivantes et les cellules mortes
     Exemple :
-       grid = Grille( (10,10), init_pattern=[(2,2),(0,2),(4,2),(2,0),(2,4)], color_life=pg.Color("red"), color_dead=pg.Color("black"))
+    grid = Grille( (10,10), init_pattern=[(2,2),(0,2),(4,2),(2,0),(2,4)], color_life=pg.Color("red"), color_dead=pg.Color("black"))
     """
     def __init__(self, dim, init_pattern=None, color_life=pg.Color("black"), color_dead=pg.Color("white")):
         import random
@@ -49,7 +49,7 @@ class Grille:
             self.cells = np.random.randint(2, size=dim, dtype=np.uint8)
         self.col_life = color_life
         self.col_dead = color_dead
-
+        
     def compute_next_iteration(self):
         """
         Calcule la prochaine génération de cellules en suivant les règles du jeu de la vie
@@ -60,12 +60,11 @@ class Grille:
         self.cells = next_cells
         return diff_cells
 
-
 class App:
     """
     Cette classe décrit la fenêtre affichant la grille à l'écran
-        - geometry est un tuple de deux entiers donnant le nombre de pixels verticaux et horizontaux (dans cet ordre)
-        - grid est la grille décrivant l'automate cellulaire (voir plus haut)
+    - geometry est un tuple de deux entiers donnant le nombre de pixels verticaux et horizontaux (dans cet ordre)
+    - grid est la grille décrivant l'automate cellulaire (voir plus haut)
     """
     def __init__(self, geometry, grid):
         self.grid = grid
@@ -94,13 +93,16 @@ class App:
             [pg.draw.line(self.screen, self.draw_color, (0,i*self.size_y), (self.width,i*self.size_y)) for i in range(self.grid.dimensions[0])]
             [pg.draw.line(self.screen, self.draw_color, (j*self.size_x,0), (j*self.size_x,self.height)) for j in range(self.grid.dimensions[1])]
         pg.display.update()
-
-
+    
 if __name__ == '__main__':
     import time
     import sys
 
-    pg.init()
+    comm = MPI.COMM_WORLD # comm est l'objet qui permet de communiquer entre les processus
+     
+    rank = comm.Get_rank() # rank est le numéro du processus courant, entre 0 et size-1, 0 étant le processus principal
+    size = comm.Get_size() # size étant le nombre de processus(ici 2)
+
     dico_patterns = { # Dimension et pattern dans un tuple
         'blinker' : ((5,5),[(2,1),(2,2),(2,3)]),
         'toad'    : ((6,6),[(2,2),(2,3),(2,4),(3,3),(3,4),(3,5)]),
@@ -117,7 +119,7 @@ if __name__ == '__main__':
         "u" : ((200,200), [(101,101),(102,102),(103,102),(103,101),(104,103),(105,103),(105,102),(105,101),(105,105),(103,105),(102,105),(101,105),(101,104)]),
         "flat" : ((200,400), [(80,200),(81,200),(82,200),(83,200),(84,200),(85,200),(86,200),(87,200), (89,200),(90,200),(91,200),(92,200),(93,200),(97,200),(98,200),(99,200),(106,200),(107,200),(108,200),(109,200),(110,200),(111,200),(112,200),(114,200),(115,200),(116,200),(117,200),(118,200)])
     }
-    choice = 'glider'
+    choice = 'glider_gun'
     if len(sys.argv) > 1 :
         choice = sys.argv[1]
     resx = 800
@@ -133,19 +135,47 @@ if __name__ == '__main__':
         print("No such pattern. Available ones are:", dico_patterns.keys())
         exit(1)
     grid = Grille(*init_pattern)
-    appli = App((resx, resy), grid)
 
-    loop = True
-    while loop:
-        #time.sleep(0.1) # A régler ou commenter pour vitesse maxi
-        t1 = time.time()
-        diff = grid.compute_next_iteration()
-        t2 = time.time()
-        appli.draw()
-        t3 = time.time()
-        for event in pg.event.get():
-            if event.type == pg.QUIT:
-                loop = False
-        print(f"Temps calcul prochaine generation : {t2-t1:2.2e} secondes, temps affichage : {t3-t2:2.2e} secondes\r", end='')
+    if rank == 0: # Processus d'affichage
+        pg.init()
+        grid = Grille(*init_pattern)
+        appli = App((resx, resy), grid)
 
-pg.quit()
+        loop = True
+        while loop:        
+            # Envoi de la grille actuelle au processus de calcul (rank 1)
+            comm.Send(appli.grid.cells, dest=1, tag=11)
+            
+            # Réception de la grille mise à jour du processus de calcul (rank 1)
+            comm.Recv(appli.grid.cells, source=1, tag=12)
+            
+            t2 = time.time()
+            
+            # Affichage de la grille mise à jour
+            appli.draw()
+            
+            t3 = time.time()
+            
+            # Gestion des événements
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    loop = False
+                    comm.Abort() # On arrête tous les processus
+                    print()
+
+            print(f"Temps affichage : {t3-t2:2.2e} secondes", flush=True)
+    
+    else: # Processus de calcul
+        loop = True
+        while loop:
+            #time.sleep(0.1) # A régler ou commenter pour vitesse maxi
+            t1 = time.time()
+            # Réception de la grille actuelle
+            comm.Recv(grid.cells, source=0, tag=11)
+            # Calcul de la prochaine génération
+            grid.compute_next_iteration()
+            t2 = time.time()
+            # Envoi de la grille mie à jour
+            comm.Send(grid.cells, dest=0, tag=12)
+            
+            print(f"Temps calcul prochaine generation : {t2-t1:2.2e} secondes", flush=True)
